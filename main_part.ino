@@ -1,28 +1,27 @@
 #include "Servo.h"
 #include <PS2X_lib.h>
-
-Servo normalServo, normalServo2, continuousServo, continuousServo2; 
-// khởi tạo lớp cho các servo. normal: servo 180 độ; continuous: servo 360 độ.
+#include <Wire.h>
+#include <Adafruit_TCS34725.h>
 
 #define PS2_DAT 12 // MISO 
 #define PS2_CMD 13 // MOSI 
 #define PS2_SEL 15 // SS 
 #define PS2_CLK 14 // SLK
+#define pressures false
+#define rumble false
 
 //Khởi tạo class của thư viện
 PS2X ps2x; // khởi tạo class PS2x
 
-/******************************************************************
- * chọn chế độ của tay cầm
- bỏ bấm analog của các nút
- bỏ chế độ rung motor
- ******************************************************************/
-#define pressures false
-#define rumble false
+// khởi tạo lớp cho các servo. normal: servo 180 độ; continuous: servo 360 độ.
+Servo normalServo, normalServo2, continuousServo, continuousServo2; 
 
+// Khởi tạo đối tượng TCS34725
+Adafruit_TCS34725 tcs = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_50MS, TCS34725_GAIN_4X);
+
+// Ngưỡng để xác định màu trắng
+const float WHITE_THRESHOLD = 255.0; // Ngưỡng độ sáng (c)
 int error = 0;
-byte type = 0;
-byte vibrate = 0;
 
 void setup(){
 	//Khởi tạo Serial monitor với tốc độ 115200
@@ -30,7 +29,7 @@ void setup(){
 	  
 	delay(300);  //thêm khoảng thời gian dừng để ổn định tay cầm
 	   
-	  //khởi tạo config_game
+	//khởi tạo config_game
 	for(int i = 0; i <= 9; ++i{
 		error = ps2x.config_gamepad(PS2_CLK, PS2_CMD, PS2_SEL, PS2_DAT, pressures, rumble);
 		if(error == 0){
@@ -40,7 +39,14 @@ void setup(){
 		else Serial.print("Kết nối thất bại");  
 		}
 	}
-    	// khởi tạo pin cho các servo: 3;
+    	if (tcs.begin())
+    		Serial.println("TCS34725 found!");
+	else {
+    		Serial.println("No TCS34725 found ... check your connections");
+    		while (1); // Nếu không tìm thấy cảm biến, dừng lại ở đây
+  	}
+
+	// khởi tạo pin cho các servo: 3;
   	normalServo.attach(5);
 	normalServo2.attach(4);
 	continuousServo.attach(2);
@@ -77,7 +83,22 @@ void setup(){
 }
 
 void detech(){
-		
+	uint16_t r, g, b, c;
+
+	// Đọc giá trị màu sắc từ cảm biến
+	tcs.getRawData(&r, &g, &b, &c);
+
+	// Kiểm tra xem màu nhận được có phải là màu trắng hay không
+	if (c > WHITE_THRESHOLD){ //nếu màu clear nhận được lớn hơn 255 => màu trắng
+		continuousServo1.write(180);
+		delay(1000);
+		continuousServo1.write(90);
+	}
+	else { //nếu không => màu đen
+		continuousServo2.write(180);
+		delay(1000);
+		continuousServo2.write(90);
+  	}
 }
 
 
