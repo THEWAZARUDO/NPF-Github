@@ -18,10 +18,6 @@ PS2X ps2x; // khởi tạo class PS2x
 #define pressures false
 #define rumble true
 
-//right now, the library does NOT support hot pluggable controllers, meaning 
-//you must always either restart your Arduino after you connect the controller, 
-//or call config_gamepad(pins) again after connecting the controller.
-
 int error = 0;
 byte type = 0;
 byte vibrate = 0;
@@ -30,55 +26,20 @@ void setup(){
   //Khởi tạo Serial monitor với tốc độ 115200
   Serial.begin(115200);
   
-  delay(300);  //thêm khoảng thời gian dừng để điều chỉnh  
+  delay(300);  //thêm khoảng thời gian dừng để ổn định tay cầm
    
   //khởi tạo config_game
-  error = ps2x.config_gamepad(PS2_CLK, PS2_CMD, PS2_SEL, PS2_DAT, pressures, rumble);
-  
-  if(error == 0){
-    Serial.print("Found Controller, configured successful ");
-    Serial.print("pressures = ");
-	if (pressures)
-	  Serial.println("true ");
-	else
-	  Serial.println("false");
-	Serial.print("rumble = ");
-	if (rumble)
-	  Serial.println("true)");
-	else
-	  Serial.println("false");
-    Serial.println("Try out all the buttons, X will vibrate the controller, faster as you press harder;");
-    Serial.println("holding L1 or R1 will print out the analog stick values.");
-    Serial.println("Note: Go to www.billporter.info for updates and to report bugs.");
-  }  
-  else if(error == 1)
-    Serial.println("No controller found, check wiring, see readme.txt to enable debug. visit www.billporter.info for troubleshooting tips");
-   
-  else if(error == 2)
-    Serial.println("Controller found but not accepting commands. see readme.txt to enable debug. Visit www.billporter.info for troubleshooting tips");
-
-  else if(error == 3)
-    Serial.println("Controller refusing to enter Pressures mode, may not support it. ");
-  
-//  Serial.print(ps2x.Analog(1), HEX);
-  
-  type = ps2x.readType(); 
-  switch(type) {
-    case 0:
-      Serial.print("Unknown Controller type found ");
-      break;
-    case 1:
-      Serial.print("DualShock Controller found ");
-      break;
-    case 2:
-      Serial.print("GuitarHero Controller found ");
-      break;
-	case 3:
-      Serial.print("Wireless Sony DualShock Controller found ");
-      break;
-   }
+  for(int i = 0; i <= 9; ++i{
+	 error = ps2x.config_gamepad(PS2_CLK, PS2_CMD, PS2_SEL, PS2_DAT, pressures, rumble);
+	  
+	 if(error == 0){
+	   	Serial.print("Kết nối thành công");
+		break;
+	 }
+	 else Serial.print("Kết nối thất bại"); 
+	 type = ps2x.readType(); 
+	 }
 }
-
 void loop() {
   /* You must Read Gamepad to get new values and set vibration values
      ps2x.read_gamepad(small motor on/off, larger motor strenght from 0-255)
@@ -88,39 +49,7 @@ void loop() {
   if(error == 1) //skip loop if no controller found
     return; 
   
-  if(type == 2){ //Guitar Hero Controller
-    ps2x.read_gamepad();          //read controller 
-   
-    if(ps2x.ButtonPressed(GREEN_FRET))
-      Serial.println("Green Fret Pressed");
-    if(ps2x.ButtonPressed(RED_FRET))
-      Serial.println("Red Fret Pressed");
-    if(ps2x.ButtonPressed(YELLOW_FRET))
-      Serial.println("Yellow Fret Pressed");
-    if(ps2x.ButtonPressed(BLUE_FRET))
-      Serial.println("Blue Fret Pressed");
-    if(ps2x.ButtonPressed(ORANGE_FRET))
-      Serial.println("Orange Fret Pressed"); 
 
-    if(ps2x.ButtonPressed(STAR_POWER))
-      Serial.println("Star Power Command");
-    
-    if(ps2x.Button(UP_STRUM))          //will be TRUE as long as button is pressed
-      Serial.println("Up Strum");
-    if(ps2x.Button(DOWN_STRUM))
-      Serial.println("DOWN Strum");
- 
-    if(ps2x.Button(PSB_START))         //will be TRUE as long as button is pressed
-      Serial.println("Start is being held");
-    if(ps2x.Button(PSB_SELECT))
-      Serial.println("Select is being held");
-    
-    if(ps2x.Button(ORANGE_FRET)) {     // print stick value IF TRUE
-      Serial.print("Wammy Bar Position:");
-      Serial.println(ps2x.Analog(WHAMMY_BAR), DEC); 
-    } 
-  }
-  else { //DualShock Controller
     ps2x.read_gamepad(false, vibrate); //read controller and set large motor to spin at 'vibrate' speed
     
     if(ps2x.Button(PSB_START))         //will be TRUE as long as button is pressed
@@ -175,7 +104,6 @@ void loop() {
       Serial.print(ps2x.Analog(PSS_RY), DEC); 
       Serial.print(",");
       Serial.println(ps2x.Analog(PSS_RX), DEC); 
-    }     
-  }
-  delay(50);  
+     }
+     delay(50);  
 }
