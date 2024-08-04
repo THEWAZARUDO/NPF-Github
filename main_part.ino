@@ -21,6 +21,8 @@ Adafruit_TCS34725 tcs = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_50MS, TCS3472
 
 // Ngưỡng để xác định màu trắng
 const float WHITE_THRESHOLD = 255.0; // Ngưỡng độ sáng (c)
+const int trigPin = IO32;
+const int echoPin = IO2;
 int error = 0;
 
 void setup(){
@@ -28,7 +30,7 @@ void setup(){
 	Serial.begin(115200);
 	  
 	delay(300);  //thêm khoảng thời gian dừng để ổn định tay cầm
-	   
+	
 	//khởi tạo config_game
 	for(int i = 0; i <= 9; ++i{
 		//thử kết nối 10 lần
@@ -54,18 +56,25 @@ void setup(){
 	continuousServo2.attach(7);
 
 	delay(10);
+	// Đặt chân Trig là OUTPUT
+  	pinMode(trigPin, OUTPUT);
+  	// Đặt chân Echo là INPUT
+  	pinMode(echoPin, INPUT);
 
     	// khởi tạo mode cho các pin 8, 9, 10, 11, 12, 13, 14, 15
  	//motor1 - điều khiển intake
 	pinMode(8, OUTPUT);
   	pinMode(9, OUTPUT);
 	analogWrite(9, 127);
+	
 	//motor2 - điều khiển bánh trái
   	pinMode(10, OUTPUT);
   	pinMode(11, OUTPUT);
+	
 	//motor3 - điều khiển bánh phải
 	pinMode(12, OUTPUT);
   	pinMode(13, OUTPUT);
+	
 	//motor4 - điều khiển ròng rọc
   	pinMode(14, OUTPUT);
   	pinMode(15, OUTPUT);
@@ -100,6 +109,36 @@ void detech(){
 		delay(1000);
 		continuousServo2.write(90);
   	}
+	long duration;
+	int distance;
+	
+	// Đảm bảo chân Trig ở mức LOW để bắt đầu một tín hiệu mới
+	digitalWrite(trigPin, LOW);
+	delayMicroseconds(2);
+	
+	// Kích hoạt chân Trig trong 10 micro giây
+	digitalWrite(trigPin, HIGH);
+	delayMicroseconds(10);
+	digitalWrite(trigPin, LOW);
+	
+	// Đọc thời gian tín hiệu Echo ở mức HIGH
+	duration = pulseIn(echoPin, HIGH);
+	// Tính khoảng cách theo công thức
+	distance = duration * 0.034 / 2;
+	
+	// In khoảng cách ra Serial Monitor
+	Serial.print("Distance: ");
+	Serial.print(distance);
+	Serial.println(" cm");
+	if(distance == 15 && LWheel_vel > 0 && RWheel_vel > 0)
+	{
+		digitalWrite(10, LOW);
+		digitalWrite(11, LOW);
+		digitalWrite(12, LOW);
+		digitalWrite(13, LOW);
+	}
+	// Đợi 1 giây trước khi đọc lại
+	delay(1000);
 }
 
 
@@ -145,6 +184,7 @@ void control(int LWheel_vel,  int RWheel_vel) // state: trạng thái di chuyể
 }
 
 void loop(){
+	detech();
 	//tiến hành di chuyển robot bằng hàm băm
 	control(- ps2x.Analog(PSS_LY) + ps2x.Analog(PSS_RX), - ps2x.Analog(PSS_LY) - ps2x.Analog(PSS_RX));
 
