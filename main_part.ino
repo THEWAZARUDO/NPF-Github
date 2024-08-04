@@ -31,18 +31,19 @@ void setup(){
 	   
 	//khởi tạo config_game
 	for(int i = 0; i <= 9; ++i{
+		//thử kết nối 10 lần
 		error = ps2x.config_gamepad(PS2_CLK, PS2_CMD, PS2_SEL, PS2_DAT, pressures, rumble);
 		if(error == 0){
 	   		Serial.print("Kết nối thành công");
-			break;
+			break; //nếu thành công thì ngừng thử
 		 	}
 		else Serial.print("Kết nối thất bại");  
 		}
 	}
     	if (tcs.begin())
-    		Serial.println("TCS34725 found!");
+    		Serial.println("Tìm thấy Sensor");
 	else {
-    		Serial.println("No TCS34725 found ... check your connections");
+    		Serial.println("Kiểm tra kết nối");
     		while (1); // Nếu không tìm thấy cảm biến, dừng lại ở đây
   	}
 
@@ -167,13 +168,13 @@ void loop(){
   		digitalWrite(15, LOW); 
 	}
 		
-	if(ps2x.Button(PSB_L2))
-        	normalServo1.write(0);
-	else normalServo1.write(90);
+	if(ps2x.Button(PSB_L2)) //nếu nút L2 đang được giữ thì
+        	normalServo1.write(0); // đưa servo 1 (nắp hộp trắng) về góc 0 <=> hộp trắng mở nắp
+	else normalServo1.write(90); // khi thả nút L2 thì đóng nắp
 	
-      	if(ps2x.Button(PSB_R2))
-        	normalServo2.write(180);
-	else normalServo2.write(90);
+      	if(ps2x.Button(PSB_R2)) //nếu nút R2 đang được giữ thì
+        	normalServo2.write(180); // đưa servo 2 (nắp hộp đen) về góc 180 <=> hộp đen mở nắp 
+	else normalServo2.write(90); // khi thả nút R2 thì đóng nắp
 	return 0;
 }
 /*
