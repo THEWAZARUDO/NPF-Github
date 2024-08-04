@@ -105,7 +105,7 @@ void detech(){
 		continuousServo1.write(90);
 	}
 	else { //nếu không => màu đen
-		continuousServo2.write(180);
+		continuousServo2.write(0);
 		delay(1000);
 		continuousServo2.write(90);
   	}
