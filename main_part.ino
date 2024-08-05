@@ -102,7 +102,7 @@ void detech(){
 	uint16_t r, g, b, c, distance;
 	uint16_t r_sum = 0, g_sum = 0, b_sum = 0, c_sum = 0; //tổng giá trị của mỗi lần đo
 
-	//lọc dữ liệu đầu vào từ 
+	//lọc dữ liệu đầu vào từ sensor
 	for(int i = 0; i <= NUM_SAMPLES; ++i){
 		// Đọc giá trị màu sắc từ cảm biến
 		tcs.getRawData(&r, &g, &b, &c);
@@ -130,7 +130,7 @@ void detech(){
 	c = c_sum / NUM_SAMPLE;
 	duration = d_sum / NUM_SAMPLE;
 	// Kiểm tra xem màu nhận được có phải là màu trắng hay không
-	if (c > WHITE_THRESHOLD){ //nếu màu clear nhận được lớn hơn 255 => màu trắng
+	if (isWhite(r, g, b)){ //kiểm tra liệu màu nhận được có phải là màu trắng không
 		continuousServo1.write(180);
 		delay(1000);
 		continuousServo1.write(90);
@@ -156,6 +156,21 @@ void detech(){
 	delay(1000);
 }
 
+bool isWhite(uint16_t r, uint16_t g, uint16_t b) {
+	const uint16_t threshold = 40000;  // ngưỡng giá trị màu tối thiểu, giá trị ba màu đỏ, lục, lam phải lớn hơn 40000 thì mới được coi là màu trắng 
+	const float maxDifferencePercent = 0.05;  // sai số phần trăm tối đa là 5%
+	// Kiểm tra liệu cả 3 màu lớn hơn ngưỡng trắng
+	if (r > threshold && g > threshold && b > threshold) {
+		//tìm màu có giá trị lớn nhất và giá trị nhỏ nhất
+		uint16_t maxVal = max(max(r, g), b); 
+		uint16_t minVal = min(min(r, g), b);
+		//tính sai số giữa 2 màu có giá trị lớn nhất và nhỏ nhất, sau đó kiểm tra nếu sai số tính được có bé hơn 15% không
+		if ((float)(maxVal - minVal) / maxVal < maxDifferencePercent) {
+			return true; //nếu tất cả điều kiện trên được đáp ứng => màu trắng => trả về sai
+    	  	}	
+	}
+	return false;// nếu không, trả về sai
+}
 
 void control(int LWheel_vel,  int RWheel_vel) // state: trạng thái di chuyển của robot, F: tiến; B: lùi;
 {
@@ -228,6 +243,7 @@ void loop(){
       	if(ps2x.Button(PSB_R2)) //nếu nút R2 đang được giữ thì
         	normalServo2.write(180); // đưa servo 2 (nắp hộp đen) về góc 180 <=> hộp đen mở nắp 
 	else normalServo2.write(90); // khi thả nút R2 thì đóng nắp
+	delayMicroseconds(10);
 	return 0;
 }
 /*
