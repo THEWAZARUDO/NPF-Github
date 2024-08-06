@@ -209,11 +209,11 @@ void control(int LWheel_vel,  int RWheel_vel) // state: trạng thái di chuyể
   	// điều khiển 2 cực chéo -> RPM xấp xỉ nhau (dựa trên mô phỏng ở tinkercad.com)
 
 	//điều khiển tốc độ của 2 bánh bằng cách băm xung PWM (đúng, tôi vừa ghi là xung xung điều chỉnh độ rộng đấy)
-	pwm.setpwm(11, LWheel_vel);
-  	pwm.setpwm(12, RWheel_vel);
+	pwm.setpwm(11, LWheel_vel * 0.6, 0);
+  	pwm.setpwm(12, RWheel_vel * 0.6, 0);
 
-  	Serial.println(LWheel_vel);
-  	Serial.println(RWheel_vel);
+  	Serial.println(LWheel_vel * 0.6);
+  	Serial.println(RWheel_vel * 0.6);
  
 }
 
