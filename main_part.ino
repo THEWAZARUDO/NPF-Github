@@ -21,9 +21,8 @@ Servo normalServo, normalServo2, continuousServo, continuousServo2;
 // Khởi tạo đối tượng TCS34725
 Adafruit_TCS34725 tcs = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_50MS, TCS34725_GAIN_4X);
 
-// Ngưỡng để xác định màu trắng
-const int trigPin = IO32;
-const int echoPin = 24;
+const int trigPin = 18;
+const int echoPin = 17;
 int error = 0;
 void setup(){
 	//Khởi tạo Serial monitor với tốc độ 115200
