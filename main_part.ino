@@ -165,8 +165,8 @@ bool isWhite(uint16_t r, uint16_t g, uint16_t b) {
 
 void control(int LWheel_vel,  int RWheel_vel) // state: trạng thái di chuyển của robot, F: tiến; B: lùi;
 {
-	// kiểm tra liệu chỉ số chu kỳ xung có âm không, nếu có thì đảo chiều động cơ và đổi dấu 
-  	if(LWheel_vel > 0){
+	// kiểm tra liệu chỉ số chu kỳ xung có bé hơn 128 (vị trí cân bằng của joystick) không, nếu có thì đảo chiều động cơ và đổi dấu 
+  	if(LWheel_vel > 128){
 		//dừng motor
 		digitalWrite(12, LOW);
 		digitalWrite(13, LOW);
@@ -175,7 +175,7 @@ void control(int LWheel_vel,  int RWheel_vel) // state: trạng thái di chuyể
 		//đặt motor 1 quay ngược chiều dương
   		digitalWrite(13, HIGH);
 	}
-	else if(LWheel_vel < 0){
+	else if(LWheel_vel < 128){
 		//dừng motor
 		digitalWrite(12, LOW);
 		digitalWrite(13, LOW);
@@ -185,7 +185,7 @@ void control(int LWheel_vel,  int RWheel_vel) // state: trạng thái di chuyể
 		digitalWrite(12, HIGH);
 		LWheel_vel *= -1;
 	}
-	if(RWheel_vel > 0){
+	if(RWheel_vel > 128){
 		//dừng motor
 		digitalWrite(10, LOW);
 		digitalWrite(11, LOW);
@@ -194,7 +194,7 @@ void control(int LWheel_vel,  int RWheel_vel) // state: trạng thái di chuyể
 		//đặt motor 2 quay theo chiều dương
       		digitalWrite(10, HIGH);
   	}
-	else if(RWheel_vel < 0){
+	else if(RWheel_vel < 128){
 		//dừng motor
 		digitalWrite(10, LOW);
 		digitalWrite(11, LOW);
