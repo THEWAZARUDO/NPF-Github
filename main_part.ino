@@ -22,9 +22,8 @@ Servo normalServo, normalServo2, continuousServo, continuousServo2;
 Adafruit_TCS34725 tcs = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_50MS, TCS34725_GAIN_4X);
 
 // Ngưỡng để xác định màu trắng
-const float WHITE_THRESHOLD = 255.0; // Ngưỡng độ sáng (c)
 const int trigPin = IO32;
-const int echoPin = IO2;
+const int echoPin = 24;
 int error = 0;
 void setup(){
 	//Khởi tạo Serial monitor với tốc độ 115200
@@ -86,7 +85,6 @@ void setup(){
 	analogWrite(15, 127);
 
 	delay(10);
-
 	digitalWrite(8, HIGH);
 	digitalWrite(9, HIGH);
 	digitalWrite(14, LOW);
@@ -100,7 +98,7 @@ void setup(){
 
 void detech(){
 	uint16_t r, g, b, c, distance;
-	uint16_t r_sum = 0, g_sum = 0, b_sum = 0, c_sum = 0; //tổng giá trị của mỗi lần đo
+	uint16_t r_sum = 0, g_sum = 0, b_sum = 0, c_sum = 0, d_sum = 0; //tổng giá trị của mỗi lần đo
 
 	//lọc dữ liệu đầu vào từ sensor
 	for(int i = 0; i <= NUM_SAMPLES; ++i){
@@ -110,7 +108,20 @@ void detech(){
 		g_sum += g;
 		b_sum += b;
 		c_sum += c;
-		
+	}
+	// chia tổng giá trị nhận được với só lần thử để nhận được giá trị trung bình, hay là giá trị đầu vào đã lọc
+	r = r_sum / NUM_SAMPLE;
+	g = g_sum / NUM_SAMPLE;
+	b = b_sum / NUM_SAMPLE;
+	c = c_sum / NUM_SAMPLE;
+	// Kiểm tra xem màu nhận được có phải là màu trắng hay không
+	if (isWhite(r, g, b)){ //kiểm tra liệu màu nhận được có phải là màu trắng không
+		normalServo2.write(180);
+	}
+	else { //nếu không => màu đen
+		normalServo2.write(0);
+  	}
+	for(int i = 0; i < 5; ++i){
 		// Đảm bảo chân Trig ở mức LOW để bắt đầu một tín hiệu mới
 		digitalWrite(trigPin, LOW);
 		delayMicroseconds(2);
@@ -118,29 +129,10 @@ void detech(){
 		digitalWrite(trigPin, HIGH);
 		delayMicroseconds(10);
 		digitalWrite(trigPin, LOW);
-		
 		// Đọc thời gian tín hiệu Echo ở mức HIGH
-		d_sum += pulseIn(echoPin, HIGH);
-		
+		d_sum = pulseIn(echoPin, HIGH);
 	}
-	// chia tổng giá trị nhận được với só lần thử để nhận được giá trị trung bình, hay là giá trị đầu vào đã lọc
-	r = r_sum / NUM_SAMPLE;
-	g = g_sum / NUM_SAMPLE;
-	b = b_sum / NUM_SAMPLE;
-	c = c_sum / NUM_SAMPLE;
-	duration = d_sum / NUM_SAMPLE;
-	// Kiểm tra xem màu nhận được có phải là màu trắng hay không
-	if (isWhite(r, g, b)){ //kiểm tra liệu màu nhận được có phải là màu trắng không
-		continuousServo1.write(180);
-		delay(1000);
-		continuousServo1.write(90);
-	}
-	else { //nếu không => màu đen
-		continuousServo2.write(0);
-		delay(1000);
-		continuousServo2.write(90);
-  	}
-	distance = duration * 0.034 / 2; //(vì xung phát mỗi 10s)
+	distance = (int)(d_sum / 5) * 0.034 / 2; //(vì xung phát mỗi 12ms)
 	// In khoảng cách ra Serial Monitor
 	Serial.print("Distance: ");
 	Serial.print(distance);
@@ -157,7 +149,7 @@ void detech(){
 }
 
 bool isWhite(uint16_t r, uint16_t g, uint16_t b) {
-	const uint16_t threshold = 40000;  // ngưỡng giá trị màu tối thiểu, giá trị ba màu đỏ, lục, lam phải lớn hơn 40000 thì mới được coi là màu trắng 
+	const uint16_t threshold = 51200;  // ngưỡng giá trị màu tối thiểu, giá trị ba màu đỏ, lục, lam phải lớn hơn 51200 thì mới được coi là màu trắng 
 	const float maxDifferencePercent = 0.05;  // sai số phần trăm tối đa là 5%
 	// Kiểm tra liệu cả 3 màu lớn hơn ngưỡng trắng
 	if (r > threshold && g > threshold && b > threshold) {
@@ -176,25 +168,40 @@ void control(int LWheel_vel,  int RWheel_vel) // state: trạng thái di chuyể
 {
 	// kiểm tra liệu chỉ số chu kỳ xung có âm không, nếu có thì đảo chiều động cơ và đổi dấu 
   	if(LWheel_vel > 0){
-		//đặt motor 1 quay ngược kim đồng hồ
-  		digitalWrite(12, LOW);
+		//dừng motor
+		digitalWrite(12, LOW);
+		digitalWrite(13, LOW);
+		//dừng trước khi đảo chiều quay của motor
+		delayMicroseconds(10);
+		//đặt motor 1 quay ngược chiều dương
   		digitalWrite(13, HIGH);
 	}
-	else if(LWheel_vel < 0)
-	{
-		//đặt motor 1 quay theo chiều kim đồng hồ
-		digitalWrite(12, HIGH);
+	else if(LWheel_vel < 0){
+		//dừng motor
+		digitalWrite(12, LOW);
 		digitalWrite(13, LOW);
+		//dừng trước khi đảo chiều quay của motor
+		delayMicroseconds(10);
+		//đặt motor 1 quay theo chiều dương
+		digitalWrite(12, HIGH);
 		LWheel_vel *= -1;
 	}
 	if(RWheel_vel > 0){
-		//đặt motor 2 quay thuận chiều kim đồng hồ
+		//dừng motor
+		digitalWrite(10, LOW);
+		digitalWrite(11, LOW);
+		//dừng
+		delayMicroseconds(10);
+		//đặt motor 2 quay theo chiều dương
       		digitalWrite(10, HIGH);
-  		digitalWrite(11, LOW);
   	}
 	else if(RWheel_vel < 0){
-		//đặt motor 2 quay ngược chiều kim đồng hồ
-	      	digitalWrite(10, LOW);	  		
+		//dừng motor
+		digitalWrite(10, LOW);
+		digitalWrite(11, LOW);
+		//dừng
+		delayMicroseconds(10);
+		//đặt motor 2 quay ngược chiều dương	
 		digitalWrite(11, HIGH);
 		RWheel_vel *= -1;
 	}
@@ -217,21 +224,27 @@ void loop(){
 	control(- ps2x.Analog(PSS_LY) + ps2x.Analog(PSS_RX), - ps2x.Analog(PSS_LY) - ps2x.Analog(PSS_RX));
 
 	if(ps2x.Button(PSB_TRIANGLE) && !ps2x.button(PSB_SQUARE)) //nếu đang nhấn nút tam giác và nút vuông không được nhấn thì
-	{
-		digitalWrite(14, HIGH); //chạy ròng rọc theo chiều kim đồng hồ
-  		digitalWrite(15, LOW); 
+	{	
+		digitalWrite(14, LOW);
+		digitalWrite(15, LOW);
+		delayMicroseconds(10);
+		digitalWrite(14, HIGH); //chạy ròng rọc theo chiều dương
 	}
 	else if(!ps2x.Button(PSB_TRIANGLE)){ // nếu không thì
+		delayMicroseconds(10);
 		digitalWrite(14, LOW); // dừng ròng rọc
   		digitalWrite(15, LOW); 
 	}
 	
 	if(ps2x.Button(PSB_SQUARE) && !ps2x.button(PSB_TRIANGLE))//nếu nút vuông đang được nhấn và nút tam giác không được nhấn thì
 	{
-		digitalWrite(14, LOW); //chạy ròng rọc ngược chiều kim đồng hồ = hạ ròng rọc
-  		digitalWrite(15, HIGH); 
+		digitalWrite(14, LOW);
+		digitalWrite(15, LOW);
+		delayMicroseconds(10);
+  		digitalWrite(15, HIGH); //chạy ròng rọc ngược chiều dương = hạ ròng rọc 
 	}
 	else if(!ps2x.Button(PSB_SQUARE)){ // nếu không thì
+		delayMicroseconds(10);
 		digitalWrite(14, LOW); // dừng ròng rọc
   		digitalWrite(15, LOW); 
 	}
@@ -241,8 +254,8 @@ void loop(){
 	else normalServo1.write(90); // khi thả nút L2 thì đóng nắp
 	
       	if(ps2x.Button(PSB_R2)) //nếu nút R2 đang được giữ thì
-        	normalServo2.write(180); // đưa servo 2 (nắp hộp đen) về góc 180 <=> hộp đen mở nắp 
-	else normalServo2.write(90); // khi thả nút R2 thì đóng nắp
+        	continuousServo.write(180); // đưa servo 2 (nắp hộp đen) về góc 180 <=> hộp đen mở nắp 
+	else continuousServo.write(90); // khi thả nút R2 thì đóng nắp
 	delayMicroseconds(10);
 	return 0;
 }
