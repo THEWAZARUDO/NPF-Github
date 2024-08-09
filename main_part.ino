@@ -115,7 +115,7 @@ void detech(){
 	c = c_sum / NUM_SAMPLE;
 	// Kiểm tra xem màu nhận được có phải là màu trắng hay không
 	if (isWhite(r, g, b)){ //kiểm tra liệu màu nhận được có phải là màu trắng không
-		normalServo2.write(180);
+		normalServo2.write(70);
 	}
 	else { //nếu không => màu đen
 		normalServo2.write(0);
