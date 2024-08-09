@@ -129,7 +129,7 @@ void detech(){
 		delayMicroseconds(10);
 		digitalWrite(trigPin, LOW);
 		// Đọc thời gian tín hiệu Echo ở mức HIGH
-		d_sum = pulseIn(echoPin, HIGH);
+		d_sum += pulseIn(echoPin, HIGH);
 	}
 	distance = (int)(d_sum / 5) * 0.034 / 2; //(vì xung phát mỗi 12ms)
 	// In khoảng cách ra Serial Monitor
