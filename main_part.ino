@@ -2,6 +2,7 @@
 #include <PS2X_lib.h>
 #include <Wire.h>
 #include <Adafruit_TCS34725.h>
+#include <Adafruit_PWMServoDriver.h>
 
 #define PS2_DAT 12 // MISO 
 #define PS2_CMD 13 // MOSI 
@@ -12,10 +13,13 @@
 #define NUM_SAMPLE 10 // khởi tạo số mẫu thử để lọc dữ liệu
 
 
-//Khởi tạo class của thư viện
+// Khởi tạo class của thư viện
 PS2X ps2x; // khởi tạo class PS2x
 
-// khởi tạo lớp cho các servo. normal: servo 180 độ; continuous: servo 360 độ.
+// Khởi tạo class của thư viện
+Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
+
+// Khởi tạo lớp cho các servo. normal: servo 180 độ; continuous: servo 360 độ.
 Servo normalServo, normalServo2, continuousServo, continuousServo2; 
 
 // Khởi tạo đối tượng TCS34725
@@ -24,6 +28,8 @@ Adafruit_TCS34725 tcs = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_50MS, TCS3472
 const int trigPin = 18;
 const int echoPin = 17;
 int error = 0;
+int LWheel_vel, RWheel_vel;
+
 void setup(){
 	//Khởi tạo Serial monitor với tốc độ 115200
 	Serial.begin(115200);
@@ -35,7 +41,7 @@ void setup(){
 	pwm.setPWMFreq(50);// cài đặt tần số PWM.
 	
 	//khởi tạo config_game
-	for(int i = 0; i <= 9; ++i{
+	for(int i = 0; i <= 9; ++i){
 		//thử kết nối 10 lần
 		error = ps2x.config_gamepad(PS2_CLK, PS2_CMD, PS2_SEL, PS2_DAT, pressures, rumble);
 		if(error == 0){
@@ -57,8 +63,6 @@ void setup(){
 	normalServo2.attach(4);
 	continuousServo.attach(2);
 	continuousServo2.attach(7);
-
-	delay(10);
 	// Đặt chân Trig là OUTPUT
   	pinMode(trigPin, OUTPUT);
   	// Đặt chân Echo là INPUT
@@ -68,7 +72,7 @@ void setup(){
  	//motor1 - điều khiển intake
 	pinMode(8, OUTPUT);
   	pinMode(9, OUTPUT);
-	analogWrite(9, 127);
+	pwm.setPWM(9, 127, 0);
 	
 	//motor2 - điều khiển bánh trái
   	pinMode(10, OUTPUT);
@@ -81,9 +85,7 @@ void setup(){
 	//motor4 - điều khiển ròng rọc
   	pinMode(14, OUTPUT);
   	pinMode(15, OUTPUT);
-	analogWrite(15, 127);
-
-	delay(10);
+	pwm.setPWM(15, 127, 0);
 	digitalWrite(8, HIGH);
 	digitalWrite(9, HIGH);
 	digitalWrite(14, LOW);
@@ -95,8 +97,8 @@ void setup(){
 }
 
 
-void detech(){
-	uint16_t r, g, b, c, distance;
+void detect(){
+	uint16_t r, g, b, c, d;
 	uint16_t r_sum = 0, g_sum = 0, b_sum = 0, c_sum = 0, d_sum = 0; //tổng giá trị của mỗi lần đo
 
 	//lọc dữ liệu đầu vào từ sensor
@@ -131,17 +133,16 @@ void detech(){
 		// Đọc thời gian tín hiệu Echo ở mức HIGH
 		d_sum += pulseIn(echoPin, HIGH);
 	}
-	distance = (int)(d_sum / 5) * 0.034 / 2; //(vì xung phát mỗi 12ms)
+	d = (int)(d_sum / 5) * 0.034 / 2; //(vì xung phát mỗi 12ms)
 	// In khoảng cách ra Serial Monitor
 	Serial.print("Distance: ");
-	Serial.print(distance);
+	Serial.print(d);
 	Serial.println(" cm");
-	if(distance <= 15 && LWheel_vel > 0 && RWheel_vel > 0)
+	if(distance <= 15)
 	{
-		digitalWrite(10, LOW);
-		digitalWrite(11, LOW);
-		digitalWrite(12, LOW);
-		digitalWrite(13, LOW);
+		//đặt tốc bằng 0 để không thể tiến.
+		LWheel_vel = min(LWheel_vel, 0);
+		RWheel_vel = min(RWheel_vel, 0);
 	}
 	// Đợi 1 giây trước khi đọc lại
 	delay(1000);
@@ -163,10 +164,14 @@ bool isWhite(uint16_t r, uint16_t g, uint16_t b) {
 	return false;// nếu không, trả về sai
 }
 
-void control(int LWheel_vel,  int RWheel_vel) // state: trạng thái di chuyển của robot, F: tiến; B: lùi;
+void control(int LJoyY, int RJoyX) // state: trạng thái di chuyển của robot, F: tiến; B: lùi;
 {
+	//dùng hàm map để chuyển đổi giá trị của joystick về tốc độ của motor
+	LWheel_vel = map(LJoyY - RJoyX, 0, 255, -255, 255);
+  	RWheel_vel = map(LJoyY + RJoyX, 0, 255, -255, 255);
+	
 	// kiểm tra liệu chỉ số chu kỳ xung có bé hơn 128 (vị trí cân bằng của joystick) không, nếu có thì đảo chiều động cơ và đổi dấu 
-  	if(LWheel_vel > 128){
+  	if(LWheel_vel > 0){
 		//dừng motor
 		digitalWrite(12, LOW);
 		digitalWrite(13, LOW);
@@ -175,7 +180,7 @@ void control(int LWheel_vel,  int RWheel_vel) // state: trạng thái di chuyể
 		//đặt motor 1 quay ngược chiều dương
   		digitalWrite(13, HIGH);
 	}
-	else if(LWheel_vel < 128){
+	else if(LWheel_vel < 0){
 		//dừng motor
 		digitalWrite(12, LOW);
 		digitalWrite(13, LOW);
@@ -183,9 +188,8 @@ void control(int LWheel_vel,  int RWheel_vel) // state: trạng thái di chuyể
 		delayMicroseconds(10);
 		//đặt motor 1 quay theo chiều dương
 		digitalWrite(12, HIGH);
-		LWheel_vel *= -1;
 	}
-	if(RWheel_vel > 128){
+	if(RWheel_vel > 0){
 		//dừng motor
 		digitalWrite(10, LOW);
 		digitalWrite(11, LOW);
@@ -194,7 +198,7 @@ void control(int LWheel_vel,  int RWheel_vel) // state: trạng thái di chuyể
 		//đặt motor 2 quay theo chiều dương
       		digitalWrite(10, HIGH);
   	}
-	else if(RWheel_vel < 128){
+	else if(RWheel_vel < 0){
 		//dừng motor
 		digitalWrite(10, LOW);
 		digitalWrite(11, LOW);
@@ -202,25 +206,27 @@ void control(int LWheel_vel,  int RWheel_vel) // state: trạng thái di chuyể
 		delayMicroseconds(10);
 		//đặt motor 2 quay ngược chiều dương	
 		digitalWrite(11, HIGH);
-		RWheel_vel *= -1;
 	}
   	// motor 1: (+) - 10; (-) - 11
   	// motor 2: (+) - 12 ; (-) - 13
   	// điều khiển 2 cực chéo -> RPM xấp xỉ nhau (dựa trên mô phỏng ở tinkercad.com)
 
 	//điều khiển tốc độ của 2 bánh bằng cách băm xung PWM (đúng, tôi vừa ghi là xung xung điều chỉnh độ rộng đấy)
-	pwm.setpwm(11, LWheel_vel * 0.6, 0);
-  	pwm.setpwm(12, RWheel_vel * 0.6, 0);
+	pwm.setPWM(11, abs(LWheel_vel * 0.6), 0);
+  	pwm.setPWM(12, abs(RWheel_vel * 0.6), 0);
 
-  	Serial.println(LWheel_vel * 0.6);
-  	Serial.println(RWheel_vel * 0.6);
+  	Serial.println(abs(LWheel_vel * 0.6));
+  	Serial.println(abs(RWheel_vel * 0.6));
  
 }
 
 void loop(){
-	detech();
+	//đọc dữ liệu từ gamepad
+	ps2x.read_gamepad();
+	//đọc dữ liệu từ sensor
+	detect();
 	//tiến hành di chuyển robot bằng hàm băm
-	control(- ps2x.Analog(PSS_LY) + ps2x.Analog(PSS_RX), - ps2x.Analog(PSS_LY) - ps2x.Analog(PSS_RX));
+	control(ps2x.Analog(PSS_LY) + ps2x.Analog(PSS_RX), ps2x.Analog(PSS_LY) - ps2x.Analog(PSS_RX));
 
 	if(ps2x.Button(PSB_TRIANGLE) && !ps2x.button(PSB_SQUARE)) //nếu đang nhấn nút tam giác và nút vuông không được nhấn thì
 	{	
@@ -252,11 +258,17 @@ void loop(){
         	normalServo1.write(0); // đưa servo 1 (nắp hộp trắng) về góc 0 <=> hộp trắng mở nắp
 	else normalServo1.write(90); // khi thả nút L2 thì đóng nắp
 	
-      	if(ps2x.Button(PSB_R2)) //nếu nút R2 đang được giữ thì
-        	continuousServo.write(180); // đưa servo 2 (nắp hộp đen) về góc 180 <=> hộp đen mở nắp 
-	else continuousServo.write(90); // khi thả nút R2 thì đóng nắp
+      	if(ps2x.Button(PSB_R2)){ //nếu nút R2 đang được giữ thì
+        	continuousServo.write(120); // đưa servo 2 (nắp hộp đen) về góc 180 <=> hộp đen mở nắp 
+		delay(500);
+		continuousServo.write(90);
+	}
+	else{    // khi thả nút R2 thì đóng nắp
+		continuousServo.write(60);
+		delay(500);
+		continuousServo.write(90);
+	}
 	delayMicroseconds(10);
-	return 0;
 }
 /*
 ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⢿⣿⢿⠿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
