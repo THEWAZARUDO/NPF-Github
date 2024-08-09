@@ -255,8 +255,8 @@ void loop(){
 	}
 		
 	if(ps2x.Button(PSB_L2)) //nếu nút L2 đang được giữ thì
-        	normalServo1.write(0); // đưa servo 1 (nắp hộp trắng) về góc 0 <=> hộp trắng mở nắp
-	else normalServo1.write(90); // khi thả nút L2 thì đóng nắp
+        	normalServo.write(0); // đưa servo 1 (nắp hộp trắng) về góc 0 <=> hộp trắng mở nắp
+	else normalServo.write(90); // khi thả nút L2 thì đóng nắp
 	
       	if(ps2x.Button(PSB_R2)){ //nếu nút R2 đang được giữ thì
         	continuousServo.write(120); // đưa servo 2 (nắp hộp đen) về góc 180 <=> hộp đen mở nắp 
