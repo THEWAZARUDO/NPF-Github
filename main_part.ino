@@ -268,7 +268,7 @@ void loop(){
 		delay(500);
 		continuousServo.write(90);
 	}
-	delayMicroseconds(10);
+	delay(10); //tránh chồng lệnh
 }
 /*
 ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⢿⣿⢿⠿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
