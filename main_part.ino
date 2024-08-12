@@ -133,7 +133,7 @@ void detect(){
 		// Đọc thời gian tín hiệu Echo ở mức HIGH
 		d_sum += pulseIn(echoPin, HIGH);
 	}
-	d = (int)(d_sum / 5) * 0.034 / 2; //(vì xung phát mỗi 12ms)
+	d = (int)(d_sum / 5) * 0.034 / 2; //(vì xung phát mỗi 12microsec)
 	// In khoảng cách ra Serial Monitor
 	Serial.print("Distance: ");
 	Serial.print(d);
@@ -164,6 +164,8 @@ bool isWhite(uint16_t r, uint16_t g, uint16_t b) {
 	return false;// nếu không, trả về sai
 }
 
+
+
 void control(int LJoyY, int RJoyX) // state: trạng thái di chuyển của robot, F: tiến; B: lùi;
 {
 	//dùng hàm map để chuyển đổi giá trị của joystick về tốc độ của motor
@@ -176,7 +178,7 @@ void control(int LJoyY, int RJoyX) // state: trạng thái di chuyển của rob
 		digitalWrite(12, LOW);
 		digitalWrite(13, LOW);
 		//dừng trước khi đảo chiều quay của motor
-		delayMicroseconds(10);
+		delay(10);
 		//đặt motor 1 quay ngược chiều dương
   		digitalWrite(13, HIGH);
 	}
@@ -185,7 +187,7 @@ void control(int LJoyY, int RJoyX) // state: trạng thái di chuyển của rob
 		digitalWrite(12, LOW);
 		digitalWrite(13, LOW);
 		//dừng trước khi đảo chiều quay của motor
-		delayMicroseconds(10);
+		delay(10);
 		//đặt motor 1 quay theo chiều dương
 		digitalWrite(12, HIGH);
 	}
@@ -194,7 +196,7 @@ void control(int LJoyY, int RJoyX) // state: trạng thái di chuyển của rob
 		digitalWrite(10, LOW);
 		digitalWrite(11, LOW);
 		//dừng
-		delayMicroseconds(10);
+		delay(10);
 		//đặt motor 2 quay theo chiều dương
       		digitalWrite(10, HIGH);
   	}
@@ -202,8 +204,8 @@ void control(int LJoyY, int RJoyX) // state: trạng thái di chuyển của rob
 		//dừng motor
 		digitalWrite(10, LOW);
 		digitalWrite(11, LOW);
-		//dừng
-		delayMicroseconds(10);
+		//delay
+		delay(10);
 		//đặt motor 2 quay ngược chiều dương	
 		digitalWrite(11, HIGH);
 	}
@@ -212,11 +214,11 @@ void control(int LJoyY, int RJoyX) // state: trạng thái di chuyển của rob
   	// điều khiển 2 cực chéo -> RPM xấp xỉ nhau (dựa trên mô phỏng ở tinkercad.com)
 
 	//điều khiển tốc độ của 2 bánh bằng cách băm xung PWM (đúng, tôi vừa ghi là xung xung điều chỉnh độ rộng đấy)
-	pwm.setPWM(11, abs(LWheel_vel * 0.6), 0);
-  	pwm.setPWM(12, abs(RWheel_vel * 0.6), 0);
+	analogWrite(11, abs(LWheel_vel * 0.6) + random(-10, 10)); // kỹ thuật phân tán xung PWM
+  	analogWrite(12, abs(RWheel_vel * 0.6) + random(-10, 10));
 
-  	Serial.println(abs(LWheel_vel * 0.6));
-  	Serial.println(abs(RWheel_vel * 0.6));
+  	Serial.println(abs(LWheel_vel * 0.6) + random(-10, 10));
+  	Serial.println(abs(RWheel_vel * 0.6) + random(-10, 10));
  
 }
 
@@ -232,11 +234,11 @@ void loop(){
 	{	
 		digitalWrite(14, LOW);
 		digitalWrite(15, LOW);
-		delayMicroseconds(10);
+		delay(10);
 		digitalWrite(14, HIGH); //chạy ròng rọc theo chiều dương
 	}
 	else if(!ps2x.Button(PSB_TRIANGLE)){ // nếu không thì
-		delayMicroseconds(10);
+		delay(10);
 		digitalWrite(14, LOW); // dừng ròng rọc
   		digitalWrite(15, LOW); 
 	}
@@ -245,11 +247,11 @@ void loop(){
 	{
 		digitalWrite(14, LOW);
 		digitalWrite(15, LOW);
-		delayMicroseconds(10);
+		delay(10);
   		digitalWrite(15, HIGH); //chạy ròng rọc ngược chiều dương = hạ ròng rọc 
 	}
 	else if(!ps2x.Button(PSB_SQUARE)){ // nếu không thì
-		delayMicroseconds(10);
+		delay(10);
 		digitalWrite(14, LOW); // dừng ròng rọc
   		digitalWrite(15, LOW); 
 	}
