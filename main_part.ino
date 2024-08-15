@@ -138,7 +138,7 @@ void detect(){
 	Serial.print("Distance: ");
 	Serial.print(d);
 	Serial.println(" cm");
-	if(distance <= 15)
+	if(distance <= 25)
 	{
 		//đặt tốc bằng 0 để không thể tiến.
 		LWheel_vel = min(LWheel_vel, 0);
