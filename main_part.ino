@@ -145,7 +145,7 @@ void detect(){
 		RWheel_vel = min(RWheel_vel, 0);
 	}
 	// Đợi 1 giây trước khi đọc lại
-	delay(1000);
+	delay(10);
 }
 
 bool isWhite(uint16_t r, uint16_t g, uint16_t b) {
